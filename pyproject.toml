@@ -1,0 +1,19 @@
+[project]
+name = "b-topic"
+version = "0.1.0"
+description = "复赛 B 题：从燃油到纯电——电动汽车消费者转型分析"
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "catboost>=1.2.10",
+    "joblib>=1.5.3",
+    "lightgbm>=4.7.0",
+    "numpy>=2.4.6",
+    "optuna>=4.9.0",
+    "pandas>=3.0.5",
+    "pyarrow>=25.0.1",
+    "scikit-learn>=1.9.0",
+    "scipy>=1.17.1",
+    "shap>=0.51.0",
+    "xgboost>=3.2.0",
+]

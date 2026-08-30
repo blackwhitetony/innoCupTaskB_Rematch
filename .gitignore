@@ -1,0 +1,41 @@
+# uv / python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# 数据与赛题原始文件（不提交）
+*.csv
+*.xlsx
+*.doc
+*.docx
+*.pdf
+复赛A题/
+复赛B题/
+
+# 运行产物（可重新生成）
+artifacts/
+submissions/
+catboost_info/
+reports/figures/
+
+# LaTeX 编译产物
+paper/*.pdf
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.toc
+paper/*.bbl
+paper/*.blg
+paper/*.synctex.gz
+paper/*.fls
+paper/*.fdb_latexmk
+
+# 编辑器 / 平台
+.ipynb_checkpoints/
+.DS_Store
+.vscode/
+.idea/

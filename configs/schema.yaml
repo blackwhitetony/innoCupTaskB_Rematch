@@ -1,0 +1,79 @@
+# B 题数据集 Schema 定义
+# 用途：schema 校验（src/schema_check.py）与预处理（src/preprocessing.py）共用。
+# 任何字段变更需同步更新本文件，并在三平台重新跑 schema 校验。
+
+file:
+  name: B题数据集.csv
+  # 首次校验后回填实际 SHA-256（十六进制，不含空格）
+  sha256: "5f805ddef674d7e7d816c751d1bded6d46d266420b80f47f6b0e55d5b2939bb8"
+  n_rows: 50000
+  n_cols: 23
+
+targets:
+  T1_energy: monthly_energy_consumption_kwh
+  T2_cost: monthly_charging_cost
+  T3_fuel: fuel_expense_per_month
+
+# 文件中的真实列顺序（用于严格列名/顺序校验）
+columns_order:
+  - age
+  - annual_income
+  - education_level
+  - city_type
+  - daily_commute_km
+  - weekly_travel_distance_km
+  - current_vehicle_type
+  - vehicle_age_years
+  - fuel_expense_per_month
+  - charging_station_accessibility
+  - nearest_charging_station_km
+  - home_charging_available
+  - electricity_cost_per_kwh
+  - environmental_awareness_score
+  - government_incentive_awareness
+  - technology_affinity_score
+  - range_anxiety_score
+  - battery_replacement_concern
+  - ev_knowledge_score
+  - previous_ev_experience
+  - ev_adoption_likelihood
+  - monthly_energy_consumption_kwh
+  - monthly_charging_cost
+
+# 类别列与其合法取值（字符串）
+categorical:
+  education_level: [High School, Bachelor, Master, PhD]
+  city_type: [Urban, Suburban, Rural]
+  current_vehicle_type: [Hatchback, Sedan, SUV, Truck]
+  ev_adoption_likelihood: [Low, Medium, High]
+
+# 二值整数列
+binary:
+  home_charging_available: [0, 1]
+  previous_ev_experience: [0, 1]
+
+# 数值列：type=number；plausible 为“合理范围”，越界只告警不删除
+numeric:
+  age:                  {plausible: [18, 90]}
+  annual_income:        {plausible: [0, 1000000]}
+  daily_commute_km:     {plausible: [0, 500]}
+  weekly_travel_distance_km: {plausible: [0, 3000]}
+  vehicle_age_years:    {plausible: [0, 40]}
+  fuel_expense_per_month: {plausible: [-500, 5000]}   # 目标 T3，允许负值
+  charging_station_accessibility: {plausible: [1, 10]}
+  nearest_charging_station_km: {plausible: [0, 200]}
+  electricity_cost_per_kwh: {plausible: [0.01, 2.0]}
+  environmental_awareness_score: {plausible: [1, 10]}
+  government_incentive_awareness: {plausible: [1, 10]}
+  technology_affinity_score: {plausible: [1, 10]}
+  range_anxiety_score:   {plausible: [1, 10]}
+  battery_replacement_concern: {plausible: [1, 10]}
+  ev_knowledge_score:    {plausible: [1, 10]}
+  monthly_energy_consumption_kwh: {plausible: [0, 5000]}  # 目标 T1
+  monthly_charging_cost: {plausible: [0, 2000]}           # 目标 T2
+
+# 允许缺失的列及其预期缺失数（供校验比对；其余列默认要求 0 缺失）
+expected_missing:
+  education_level: 500
+  charging_station_accessibility: 500
+  ev_knowledge_score: 500

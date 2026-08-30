@@ -1,0 +1,48 @@
+# P0 口径冻结：泄露边界与提交假设（严格口径）
+# 对应 plan.md 第 3、4 节。未经组委会确认前，主结果一律采用此严格口径。
+
+targets:
+  T1: monthly_energy_consumption_kwh
+  T2: monthly_charging_cost
+  T3: fuel_expense_per_month
+
+# 每个任务的特征可用性（严格端到端口径）
+availability:
+  T1:
+    safe:
+      - 除三个目标列外的全部原始前置特征
+      - 派生特征（行程结构、估算月里程等）
+    forbidden:
+      - monthly_energy_consumption_kwh        # 目标本身
+      - monthly_charging_cost                  # 下游结果；除以电价可反推能耗
+      - row_id                                 # 行号仅用于回填
+  T2:
+    safe:
+      - 原始安全特征（含 electricity_cost_per_kwh）
+      - T1 的严格 OOF/测试预测 energy_hat
+      - cost_physics = energy_hat * electricity_cost_per_kwh
+    forbidden:
+      - monthly_charging_cost                  # 目标本身
+      - 训练用真实能耗、测试用预测能耗（teacher forcing）
+  T3:
+    safe:
+      - 出行、车型、城市、人口统计等前置特征
+      - 派生特征（行程结构、交互项）
+    forbidden:
+      - fuel_expense_per_month                 # 目标本身
+      - monthly_energy_consumption_kwh         # 转型后结果
+      - monthly_charging_cost                  # 转型后结果
+      - row_id
+
+# 待组委会确认项（在取得答复前不修改上述边界）
+pending_confirm:
+  - 三个任务是否共用同一测试表；每任务测试表中隐藏哪些目标列
+  - T2 测试时是否提供真实 monthly_energy_consumption_kwh / fuel_expense_per_month
+  - adj-R² 中 p 对 One-Hot、树模型、公式级联模型如何计算
+  - 预测 CSV 为何要求包含真值；盲测提交时真值列留空还是赛后提交
+  - 是否允许任务间预测值级联；是否要求分别提交独立模型
+
+# 级联规则
+cascade:
+  - T2 必须使用严格嵌套 OOF 的 T1 预测；真实能耗×电价仅作 Oracle 上界
+  - 若测试提供真实能耗/燃油，再单独跑“条件口径”作为对照，不混入主结果

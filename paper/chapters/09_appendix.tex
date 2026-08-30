@@ -1,0 +1,65 @@
+\section{源代码文件清单}
+
+本研究所使用的源代码文件如下（完整代码见支撑材料）：
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lp{7cm}}
+\toprule
+\textbf{文件} & \textbf{功能说明} \\
+\midrule
+src/schema\_check.py & Schema 校验：文件哈希、列名顺序、类型、缺失、重复、无穷、非法类别与边界 \\
+src/preprocessing.py & 预处理模块：折内填补（中位数/Missing）、One-Hot 编码、标准化 \\
+src/features.py & 特征矩阵构建与各任务特征块定义 \\
+src/folds.py & 固定折划分（5 折 $\times$ 3 种子） \\
+src/metrics.py & $R^2$、adj-$R^2$、RMSE、MAE 指标 \\
+src/experiments.py & P2 稀疏基线 + P3 特征消融 + T2 严格嵌套级联 \\
+src/finalize.py & P4 树模型残差确认 + P6 5折$\times$3种子最终确认 \\
+src/submit.py & 最终模型拟合与提交 CSV 生成 \\
+src/make\_figures.py & 论文 EDA 配图生成 \\
+configs/schema.yaml & 数据 Schema 定义（列顺序、类型、边界、预期缺失） \\
+configs/leakage.yaml & 泄露边界冻结（各任务可用/禁用特征清单） \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{运行环境}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{项目} & \textbf{配置} \\
+\midrule
+Python 版本 & 3.11 \\
+包管理器 & uv \\
+核心依赖 & scikit-learn, lightgbm, catboost, xgboost, pandas, numpy, matplotlib \\
+算力 & CPU（无需 GPU） \\
+操作系统 & Windows 11 \\
+随机种子 & 42 / 2026 / 7 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{模型调用方式}
+
+最终模型均为闭式公式，参数存档于 artifacts/models/final\_models.json：
+
+\begin{verbatim}
+T1: energy = 0.8163487 * weekly_travel_distance_km
+T2: cost   = 0.8163487 * weekly_travel_distance_km * electricity_cost_per_kwh
+T3: fuel   = 8.3947643 * daily_commute_km
+\end{verbatim}
+
+支撑材料解压后，在项目根目录执行：
+
+\begin{verbatim}
+uv sync                          # 安装依赖
+uv run python -m src.schema_check   # 数据校验
+uv run python -m src.folds          # 生成固定折
+uv run python -m src.experiments    # 基线 + 消融
+uv run python -m src.finalize       # 残差确认 + 最终确认
+uv run python -m src.submit         # 拟合最终模型 + 生成提交
+\end{verbatim}
+
+正式测试集到达后，执行 \texttt{uv run python -m src.submit --test <测试.csv>} 即可生成三份提交文件（T1/T2/T3），格式为 \texttt{row\_id, true, prediction}。
