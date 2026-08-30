@@ -12,9 +12,9 @@
 \usepackage{lastpage}
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[C]{BDATA2600409 \quad page \thepage \ of \pageref{LastPage}}
+\fancyhead[C]{TeamBDATA2600409 \quad page \thepage \ of \pageref{LastPage}}
 \renewcommand{\headrulewidth}{0.4pt}
-\cfoot{}
+\cfoot{\thepage}
 
 % ============ 数学 ============
 \usepackage{amsmath,amssymb}
@@ -50,7 +50,7 @@
 
 % ============ 元数据 ============
 \title{从燃油到纯电：电动汽车消费者转型回归分析}
-\author{BDATA2600409}
+\author{TeamBDATA2600409}
 \date{2026年8月30日}
 
 \begin{document}
@@ -60,9 +60,9 @@
 \thispagestyle{empty}
 \input{chapters/00_abstract.tex}
 
-% ============ 目录页（第2页）============
+% ============ 目录页（第2页起）============
 \newpage
-\thispagestyle{empty}
+\pagestyle{empty}
 \tableofcontents
 \newpage
 
