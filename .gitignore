@@ -13,6 +13,8 @@ __pycache__/
 *.doc
 *.docx
 *.pdf
+*.zip
+*.rar
 复赛A题/
 复赛B题/
 
@@ -33,6 +35,10 @@ paper/*.blg
 paper/*.synctex.gz
 paper/*.fls
 paper/*.fdb_latexmk
+support/*.aux
+support/*.log
+support/*.out
+support/*.toc
 
 # 编辑器 / 平台
 .ipynb_checkpoints/

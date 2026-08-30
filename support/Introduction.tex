@@ -1,0 +1,129 @@
+\documentclass[12pt,a4paper]{ctexart}
+
+\usepackage[top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage[colorlinks=true,linkcolor=blue,urlcolor=blue]{hyperref}
+\usepackage{setspace}
+\onehalfspacing
+
+\title{模型预测结果文档说明（Introduction）}
+\author{TeamBDATA2600409}
+\date{2026年8月30日}
+
+\begin{document}
+\maketitle
+
+\section{设计思路}
+
+\subsection{问题概述}
+
+本赛题基于 50,000 条电动汽车消费者记录，完成三个回归任务，评分指标为调整决定系数（adj-$R^2$）：
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ccc}
+\toprule
+\textbf{任务} & \textbf{预测目标} & \textbf{最终模型} \\
+\midrule
+T1 月度能耗 & monthly\_energy\_consumption\_kwh & $0.8163487 \times weekly$ \\
+T2 月度充电成本 & monthly\_charging\_cost & $0.8163487 \times weekly \times price$ \\
+T3 燃油替代支出 & fuel\_expense\_per\_month & $8.3947643 \times daily$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{核心思路：物理结构优先，复杂模型克制}
+
+本方案的可行性建立在数据探索阶段的一个关键发现之上：该数据集由近似确定性的物理关系生成，稀疏公式即可逼近预测上限。具体证据如下：
+
+\begin{enumerate}[itemsep=0pt]
+\item \textbf{比率诊断}：月能耗与周里程的比率（$energy/weekly$）近似一个与其余特征无关的随机量，各车型差异不足 0.001；燃油支出与日通勤过原点 OLS 得系数 8.395，残差标准差约 40；充电成本与``能耗 $\times$ 电价''的 $R^2$ 达 0.9994。
+\item \textbf{相关性结构}：月能耗与周里程相关系数 0.936，燃油支出与日通勤 0.952，三者目标与对应出行变量呈极强的线性关系。
+\item \textbf{复杂模型证伪}：在稀疏基线的折内残差上训练浅层 LightGBM，三个任务相对基线的 $\Delta R^2$（Bootstrap 95\% 置信区间）全部为负，题面建议的车型/地域交互特征亦无增益。
+\end{enumerate}
+
+据此，本方案以可解释的闭式公式为最终模型，其优势在于：与数据生成机制一致、无过拟合风险、在 adj-$R^2$ 评分口径下不受自由度惩罚、且完全可复现。
+
+\subsection{关键设计：严格嵌套 OOF 级联（T2）}
+
+任务二的充电成本近似等于``能耗 $\times$ 电价''。为避免在训练时使用真实能耗、测试时改用预测能耗造成的 teacher forcing（训练/推理分布错位），本方案采用严格嵌套 OOF 级联：在任务二的外层训练折内部再次交叉验证任务一，为训练行生成内层 OOF 能耗，仅以该预测值构造 $cost = \hat{energy} \times price$，从机制上杜绝跨折信息泄漏。
+
+\subsection{异常值处理（T3）}
+
+燃油支出存在 271 个负值。消融实验表明，保留原值（过原点 OLS）优于删除、缩尾与 Huber 稳健回归，故最终模型保留原始标签、不做对数变换与预测截断。
+
+\section{环境\&语言}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{项目} & \textbf{配置} \\
+\midrule
+语言 & Python 3.11 \\
+包管理器 & uv \\
+依赖库 & pandas, numpy, scipy, scikit-learn, lightgbm \\
+可选依赖 & catboost, xgboost, optuna, shap, matplotlib \\
+算力 & CPU（无需 GPU），全部实验数十秒内完成 \\
+操作系统 & Windows 11 \\
+随机种子 & 42 / 2026 / 7 \\
+数据规模 & 50,000 行 $\times$ 23 列 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{模型调用方式}
+
+\subsection{最终模型（闭式公式）}
+
+最终模型不依赖任何序列化文件，参数仅 2 个系数（存档于 \texttt{artifacts/models/final\_models.json}）：
+
+\begin{equation}
+\hat{y}_1 = 0.8163487 \times weekly\_travel\_distance\_km
+\end{equation}
+\begin{equation}
+\hat{y}_2 = 0.8163487 \times weekly\_travel\_distance\_km \times electricity\_cost\_per\_kwh
+\end{equation}
+\begin{equation}
+\hat{y}_3 = 8.3947643 \times daily\_commute\_km
+\end{equation}
+
+\subsection{复现与预测}
+
+解压支撑材料后，在项目根目录执行：
+
+\begin{verbatim}
+uv sync                              # 安装依赖
+uv run python -m src.schema_check    # 数据校验
+uv run python -m src.folds           # 生成固定折
+uv run python -m src.experiments     # 基线 + 消融
+uv run python -m src.finalize        # 残差确认 + 最终确认
+uv run python -m src.submit          # 拟合最终模型 + 生成提交
+\end{verbatim}
+
+对正式测试集预测：
+
+\begin{verbatim}
+uv run python -m src.submit --test <测试.csv>
+\end{verbatim}
+
+输出三份提交文件 \texttt{T1/T2/T3\_submission.csv}，格式为 \texttt{row\_id, true, prediction}。数据 CSV 需置于 \texttt{复赛B题/B题数据集.csv}。
+
+\subsection{指标（5 折 $\times$ 3 种子 pooled OOF）}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{cccc}
+\toprule
+\textbf{任务} & \textbf{adj-$R^2$} & \textbf{RMSE} & \textbf{MAE} \\
+\midrule
+T1 & 0.876298 & 31.04 & 24.59 \\
+T2 & 0.917817 & 7.15 & 5.32 \\
+T3 & 0.905416 & 40.03 & 31.96 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}
