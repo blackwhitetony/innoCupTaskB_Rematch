@@ -41,6 +41,16 @@ Python 版本 & 3.11 \\
 \end{tabular}
 \end{table}
 
+\section{开源代码仓库}
+
+本项目全部代码、论文 LaTeX 源码及 EDA 配图均在 GitHub 平台开源：
+
+\begin{itemize}[itemsep=2pt]
+\item \textbf{仓库地址}：\url{https://github.com/blackwhitetony/innoCupTaskB_Rematch}
+\item \textbf{主要目录}：src/（数据校验、预处理、特征、基线/消融、最终确认与提交脚本）、configs/（Schema 与泄露边界）、autodl/（在线平台复现脚本）、paper/（论文 LaTeX 源码）、reports/（结果摘要与方法论笔记）
+\item \textbf{说明}：数据 CSV 不随仓库提交，复现时需自行将赛题数据置于 \texttt{复赛B题/B题数据集.csv}。
+\end{itemize}
+
 \section{模型调用方式}
 
 最终模型均为闭式公式，参数存档于 artifacts/models/final\_models.json：
